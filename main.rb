@@ -27,18 +27,17 @@ while line_index < file_lines.count
 end
 
 
-def score_library(library, remaining_days, without_books, book_scores)
+def score_library(library, remaining_days, book_scores)
   curr_day         = library[:n_days]
   total_score      = 0
   read_books       = []
   added_book_index = 0
-  _books           = library[:books] - without_books
-  while curr_day < remaining_days && added_book_index < _books.count
+  while curr_day < remaining_days && added_book_index < library[:books].count
     library[:n_books_per_day].times do
-      total_score += book_scores[_books[added_book_index]]
-      read_books << _books[added_book_index]
+      total_score += book_scores[library[:books][added_book_index]]
+      read_books << library[:books][added_book_index]
       added_book_index += 1
-      break if added_book_index >= _books.count
+      break if added_book_index >= library[:books].count
     end
     curr_day += 1
   end
@@ -46,6 +45,12 @@ def score_library(library, remaining_days, without_books, book_scores)
       total_score: total_score,
       read_books:  read_books
   }
+end
+
+def clear_read_books(libraries, read_books)
+  libraries.each do |lib|
+    lib[:books] = lib[:books] - read_books
+  end
 end
 
 read_books       = []
@@ -60,12 +65,13 @@ output = {
 while curr_day < n_days
   if !signing_up_lib
     if libraries.any?
-      signing_up_lib = libraries.max_by { |lib| score_library(lib, n_days - curr_day, read_books, book_scores)[:total_score] }
-      score_data = score_library(signing_up_lib, n_days - curr_day, read_books, book_scores)
+      signing_up_lib = libraries.max_by { |lib| score_library(lib, n_days - curr_day, book_scores)[:total_score] }
+      score_data     = score_library(signing_up_lib, n_days - curr_day, book_scores)
       break unless score_data[:total_score] > 0
-      read_books     = read_books | score_data[:read_books]
+      read_books = read_books | score_data[:read_books]
       output[:signed_libraries] << { library: signing_up_lib, read_books: score_data[:read_books] }
-      libraries               = libraries - [signing_up_lib]
+      libraries = libraries - [signing_up_lib]
+      clear_read_books(libraries, score_data[:read_books])
       signing_up_lib[:n_days] -= 1
     end
   else
