@@ -41,6 +41,8 @@ def score_library(library, remaining_days, book_scores)
     end
     curr_day += 1
   end
+  # Take signup days into account
+  total_score = total_score / (library[:n_days] + 1)
   {
       total_score: total_score,
       read_books:  read_books
@@ -81,7 +83,7 @@ while curr_day < n_days
       signing_up_lib   = nil
     end
   end
-  puts curr_day
+  puts "#{file}\t #{curr_day}/#{n_days}"
   curr_day += 1
 end
 
