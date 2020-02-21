@@ -1,2 +1,2 @@
-# Google-Hash-Code-2018-Qualification
-Attempt for the Google Hash Code 2018 Qualification Round
+# Google-Hash-Code-2020-Qualification
+Attempt for the Google Hash Code 2020 Qualification Round

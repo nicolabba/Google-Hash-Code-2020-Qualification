@@ -4,6 +4,8 @@ file = ARGV[0]
 
 file_lines = File.read("./in/#{file}.txt").split("\n")
 
+SCORE_DECLINE_RATE = 1.025
+
 n_books, n_libraries, n_days = file_lines[0].split(' ').map(&:to_i)
 book_scores                  = file_lines[1].split(' ').map(&:to_i)
 
@@ -42,7 +44,7 @@ def score_library(library, remaining_days, book_scores)
     curr_day += 1
   end
   # Take signup days into account
-  total_score = total_score / (library[:n_days] + 1)
+  total_score = total_score / (SCORE_DECLINE_RATE ** library[:n_days])
   {
       total_score: total_score,
       read_books:  read_books
