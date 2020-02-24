@@ -65,32 +65,29 @@ output = {
 }
 
 while curr_day < n_days
-  if !signing_up_lib
-    if libraries.any?
-      scores_cache   = {}
-      signing_up_lib = libraries.max_by do |lib|
-        # Cache the score data for later usage
-        scores_cache[lib[:id]] = score_library(lib, n_days - curr_day, book_scores)
-        scores_cache[lib[:id]][:total_score]
-      end
-      score_data     = scores_cache[signing_up_lib[:id]]
-      # If no library can yield more than 0 points, break the loop
-      break unless score_data[:total_score] > 0
-      output[:signed_libraries] << { library: signing_up_lib, scanned_books: score_data[:scanned_books] }
-      # Remove the signed up library
-      libraries = libraries - [signing_up_lib]
-      # Clean up the scanned books from the remaining libraries
-      clear_scanned_books(libraries, score_data[:scanned_books])
-      signing_up_lib[:n_days] -= 1
-    end
-  else
-    signing_up_lib[:n_days] -= 1
-    if signing_up_lib[:n_days] <= 0
-      signing_up_lib = nil
-    end
+  # Clear the previous signup
+  signing_up_lib = nil if signing_up_lib
+  # Break the loop if there are no libraries left
+  break if libraries.empty?
+
+  scores_cache   = {}
+  signing_up_lib = libraries.max_by do |lib|
+    # Cache the score data for later usage
+    scores_cache[lib[:id]] = score_library(lib, n_days - curr_day, book_scores)
+    scores_cache[lib[:id]][:total_score]
   end
+  score_data     = scores_cache[signing_up_lib[:id]]
+  # If no library can yield more than 0 points, break the loop
+  break unless score_data[:total_score] > 0
+  output[:signed_libraries] << { library: signing_up_lib, scanned_books: score_data[:scanned_books] }
+  # Remove the signed up library
+  libraries = libraries - [signing_up_lib]
+  # Clean up the scanned books from the remaining libraries
+  clear_scanned_books(libraries, score_data[:scanned_books])
+
   puts "#{file}\t #{curr_day}/#{n_days}"
-  curr_day += 1
+  # Skip the days needed for the library signup
+  curr_day += signing_up_lib[:n_days]
 end
 
 submission = [
