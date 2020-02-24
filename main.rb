@@ -6,11 +6,12 @@ file_lines = File.read("./in/#{file}.txt").split("\n")
 
 SCORE_DECLINE_RATE = 1.025
 
-n_books, n_libraries, n_days = file_lines[0].split(' ').map(&:to_i)
-book_scores                  = file_lines[1].split(' ').map(&:to_i)
+_, _, n_days = file_lines[0].split(' ').map(&:to_i)
+book_scores  = file_lines[1].split(' ').map(&:to_i)
 
 libraries = []
 
+# Parse library data
 line_index    = 2
 library_index = 0
 while line_index < file_lines.count
@@ -28,16 +29,15 @@ while line_index < file_lines.count
   line_index    += 2
 end
 
-
 def score_library(library, remaining_days, book_scores)
   curr_day         = library[:n_days]
   total_score      = 0
-  read_books       = []
+  scanned_books    = []
   added_book_index = 0
   while curr_day < remaining_days && added_book_index < library[:books].count
     library[:n_books_per_day].times do
       total_score += book_scores[library[:books][added_book_index]]
-      read_books << library[:books][added_book_index]
+      scanned_books << library[:books][added_book_index]
       added_book_index += 1
       break if added_book_index >= library[:books].count
     end
@@ -46,21 +46,19 @@ def score_library(library, remaining_days, book_scores)
   # Take signup days into account
   total_score = total_score / (SCORE_DECLINE_RATE ** library[:n_days])
   {
-      total_score: total_score,
-      read_books:  read_books
+      total_score:   total_score,
+      scanned_books: scanned_books
   }
 end
 
-def clear_read_books(libraries, read_books)
+def clear_scanned_books(libraries, scanned_books)
   libraries.each do |lib|
-    lib[:books] = lib[:books] - read_books
+    lib[:books] = lib[:books] - scanned_books
   end
 end
 
-read_books       = []
-signed_libraries = []
-signing_up_lib   = nil
-curr_day         = 0
+signing_up_lib = nil
+curr_day       = 0
 
 output = {
     signed_libraries: []
@@ -69,20 +67,26 @@ output = {
 while curr_day < n_days
   if !signing_up_lib
     if libraries.any?
-      signing_up_lib = libraries.max_by { |lib| score_library(lib, n_days - curr_day, book_scores)[:total_score] }
-      score_data     = score_library(signing_up_lib, n_days - curr_day, book_scores)
+      scores_cache   = {}
+      signing_up_lib = libraries.max_by do |lib|
+        # Cache the score data for later usage
+        scores_cache[lib[:id]] = score_library(lib, n_days - curr_day, book_scores)
+        scores_cache[lib[:id]][:total_score]
+      end
+      score_data     = scores_cache[signing_up_lib[:id]]
+      # If no library can yield more than 0 points, break the loop
       break unless score_data[:total_score] > 0
-      read_books = read_books | score_data[:read_books]
-      output[:signed_libraries] << { library: signing_up_lib, read_books: score_data[:read_books] }
+      output[:signed_libraries] << { library: signing_up_lib, scanned_books: score_data[:scanned_books] }
+      # Remove the signed up library
       libraries = libraries - [signing_up_lib]
-      clear_read_books(libraries, score_data[:read_books])
+      # Clean up the scanned books from the remaining libraries
+      clear_scanned_books(libraries, score_data[:scanned_books])
       signing_up_lib[:n_days] -= 1
     end
   else
     signing_up_lib[:n_days] -= 1
     if signing_up_lib[:n_days] <= 0
-      signed_libraries = [*signed_libraries, signing_up_lib]
-      signing_up_lib   = nil
+      signing_up_lib = nil
     end
   end
   puts "#{file}\t #{curr_day}/#{n_days}"
@@ -92,7 +96,7 @@ end
 submission = [
     output[:signed_libraries].count.to_s,
     *output[:signed_libraries].map do |lib|
-      ["#{lib[:library][:id]} #{lib[:read_books].count}", lib[:read_books].join(' ')].join "\n"
+      ["#{lib[:library][:id]} #{lib[:scanned_books].count}", lib[:scanned_books].join(' ')].join "\n"
     end
 ].join "\n"
 
