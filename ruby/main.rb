@@ -2,7 +2,7 @@ require 'pry'
 
 file = ARGV[0]
 
-file_lines = File.read("./in/#{file}.txt").split("\n")
+file_lines = File.read("../in/#{file}.txt").split("\n")
 
 SCORE_DECLINE_RATE = 1.025
 
@@ -97,4 +97,4 @@ submission = [
     end
 ].join "\n"
 
-File.write("./out/#{file}.txt", submission)
+File.write("../out/#{file}.txt", submission)
